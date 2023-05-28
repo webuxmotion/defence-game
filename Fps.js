@@ -6,7 +6,7 @@ class Fps {
     this.lastUpdateCounter = 0;
     this.items = [];
     this.lineWidth = 5;
-    this.maxItems = 30;
+    this.maxItems = 200;
     this.height = 50;
     this.width = this.maxItems * this.lineWidth;
     this.position = {
@@ -44,7 +44,7 @@ class Fps {
     }
 
     c.font = "20px Arial";
-    c.fillStyle = "black";
+    c.fillStyle = "white";
     c.fillText( `FPS: ${this.fps}` , this.position.x , this.position.y );
     c.restore();
   }
