@@ -3,19 +3,34 @@ const c = canvas.getContext('2d');
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 const scoreEl = document.querySelector('.js-score-number');
+const modalEl = document.querySelector('#modalEl');
+const modalScoreEl = document.querySelector('#modalScoreEl');
+const buttonEl = document.querySelector('#buttonEl');
+const startButtonEl = document.querySelector('#startButtonEl')
+const startModalEl = document.querySelector('#startModalEl')
 
-const player = new Player({
-  x: canvas.width / 2, 
-  y: canvas.height / 2,
-  radius: 10,
-  color: "white"
-});
-
-const projectiles = [];
-const enemies = [];
-const particles = [];
+let player;
+let projectiles = [];
+let enemies = [];
+let particles = [];
 let animationId;
+let intervalId;
 let score = 0;
+
+function init() {
+  player = new Player({
+    x: canvas.width / 2, 
+    y: canvas.height / 2,
+    radius: 10,
+    color: "white"
+  });
+  projectiles = []
+  enemies = []
+  particles = []
+  animationId
+  score = 0
+  scoreEl.innerHTML = 0
+}
 
 const fps = new Fps({ canvasWidth: canvas.width });
 
@@ -58,6 +73,18 @@ function animate() {
 
     if (dist - player.radius - enemy.radius < 1) {
       cancelAnimationFrame(animationId);
+      clearInterval(intervalId);
+      modalEl.style.display = 'block';
+      gsap.fromTo(
+        '#modalEl',
+        { scale: 0.8, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          ease: 'expo'
+        }
+      )
+      modalScoreEl.innerHTML = score;
     }
 
     for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
@@ -103,13 +130,11 @@ function animate() {
 
   player.draw();
   fps.update({ c });
-  
-  c.font = "20px Arial";
-  c.fillText(enemies.length, 100, 100);
+
 }
 
 const spawnEnemies = () => {
-  setInterval(() => {
+  intervalId = setInterval(() => {
     const radius = Math.random() * 25 + 5;
     let x;
     let y;
@@ -139,7 +164,9 @@ const spawnEnemies = () => {
   }, 1000);
 }
 
-addEventListener('click', ({ clientX, clientY }) => {
+addEventListener('click', ({ target, clientX, clientY }) => {
+  if (target.tagName === "BUTTON") return;
+  
   const angle = Math.atan2(clientY - player.y, clientX - player.x);
   const x = Math.cos(angle) * 5;
   const y = Math.sin(angle) * 5;
@@ -155,5 +182,32 @@ addEventListener('click', ({ clientX, clientY }) => {
   }))
 });
 
-animate();
-spawnEnemies();
+buttonEl.addEventListener('click', ({ target }) => {
+  init()
+  animate()
+  spawnEnemies()
+  gsap.to('#modalEl', {
+    opacity: 0,
+    scale: 0.8,
+    duration: 0.2,
+    ease: 'expo.in',
+    onComplete: () => {
+      modalEl.style.display = 'none'
+    }
+  })
+});
+
+startButtonEl.addEventListener('click', () => {
+  init()
+  animate()
+  spawnEnemies()
+  gsap.to('#startModalEl', {
+    opacity: 0,
+    scale: 0.8,
+    duration: 0.2,
+    ease: 'expo.in',
+    onComplete: () => {
+      startModalEl.style.display = 'none'
+    }
+  })
+});
