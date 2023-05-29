@@ -2,6 +2,7 @@ const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 canvas.width = innerWidth;
 canvas.height = innerHeight;
+const scoreEl = document.querySelector('.js-score-number');
 
 const player = new Player({
   x: canvas.width / 2, 
@@ -14,6 +15,7 @@ const projectiles = [];
 const enemies = [];
 const particles = [];
 let animationId;
+let score = 0;
 
 const fps = new Fps({ canvasWidth: canvas.width });
 
@@ -22,16 +24,19 @@ function animate() {
   c.fillStyle = 'rgba(0, 0, 0, 0.1)';
   c.fillRect(0, 0, canvas.width, canvas.height);
 
-  particles.forEach((particle, index) => {
+  for (let index = particles.length - 1; index >= 0; index--) {
+    const particle = particles[index];
+
     if (particle.alpha === 0) {
-      console.log('sdfsdf');
       particles.splice(index, 1);
     } else {
       particle.update();
     }
-  });
+  }
 
-  projectiles.forEach((projectile, index) => {
+  for (let index = projectiles.length - 1; index >= 0; index--) {
+    const projectile = projectiles[index];
+
     projectile.update();
 
     if (
@@ -40,12 +45,13 @@ function animate() {
       projectile.y < -projectile.radius ||
       projectile.y > canvas.height + projectile.radius
     ) {
-      setTimeout(() => {
-        projectiles.splice(index, 1);
-      }, 0);
+      projectiles.splice(index, 1);
     }
-  });
-  enemies.forEach((enemy, index) => {
+  }
+
+  for (let index = enemies.length - 1; index >= 0; index--) {
+    const enemy = enemies[index];
+
     enemy.update();
 
     const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
@@ -54,7 +60,8 @@ function animate() {
       cancelAnimationFrame(animationId);
     }
 
-    projectiles.forEach((projectile, projectileIndex) => {
+    for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
+      const projectile = projectiles[projectileIndex];
       const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
 
       // projectile hits enemy
@@ -66,8 +73,8 @@ function animate() {
             x: enemy.x,
             y: enemy.y,
             velocity: {
-              x: (Math.random() - 0.5) * 4,
-              y: (Math.random() - 0.5) * 4,
+              x: (Math.random() - 0.5) * 6,
+              y: (Math.random() - 0.5) * 6,
             },
             radius: Math.random() * 5,
             color: enemy.color,
@@ -75,21 +82,25 @@ function animate() {
         }
 
         if (enemy.radius - 10 > 10) {
+          score += 100;
+          scoreEl.innerHTML = score;
           gsap.to(enemy, {
             radius: enemy.radius - 10
           });
-          setTimeout(() => {
-            projectiles.splice(projectileIndex, 1);
-          }, 0);
+          projectiles.splice(projectileIndex, 1);
         } else {
-          setTimeout(() => {
-            enemies.splice(index, 1);
-            projectiles.splice(projectileIndex, 1);
-          }, 0);
+
+          // remove enemy if they too small
+          score += 150;
+          scoreEl.innerHTML = score;
+
+          enemies.splice(index, 1);
+          projectiles.splice(projectileIndex, 1);
         }
       }
-    });
-  });
+    }
+  }
+
   player.draw();
   fps.update({ c });
   
