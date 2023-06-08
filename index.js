@@ -17,6 +17,9 @@ let animationId;
 let intervalId;
 let score = 0;
 
+let lines = [];
+let point = false;
+
 function init() {
   player = new Player({
     x: canvas.width / 2, 
@@ -38,6 +41,35 @@ function animate() {
   animationId = requestAnimationFrame(animate);
   c.fillStyle = 'rgba(0, 0, 0, 0.1)';
   c.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (point) {
+    c.save();
+    c.beginPath();
+    c.arc(point.x, point.y, 10, 0, Math.PI * 2);
+    c.fillStyle = 'green';
+    c.fill();
+    c.restore();
+  }
+
+  if (lines.length) {
+    c.save();
+    c.beginPath();
+    c.moveTo(lines[0], lines[1]);
+    c.lineTo(lines[2], lines[3]);
+    c.fillStyle = 'green';
+    c.stroke();
+    c.closePath();
+    c.restore();
+
+    c.save();
+    c.beginPath();
+    c.moveTo(lines[4], lines[5]);
+    c.lineTo(lines[6], lines[7]);
+    c.fillStyle = 'green';
+    c.stroke();
+    c.closePath();
+    c.restore();
+  }
 
   for (let index = particles.length - 1; index >= 0; index--) {
     const particle = particles[index];
@@ -128,9 +160,8 @@ function animate() {
     }
   }
 
-  player.draw();
+  player.update();
   fps.update({ c });
-
 }
 
 const spawnEnemies = () => {
@@ -168,17 +199,16 @@ addEventListener('click', ({ target, clientX, clientY }) => {
   if (target.tagName === "BUTTON") return;
   
   const angle = Math.atan2(clientY - player.y, clientX - player.x);
-  const x = Math.cos(angle) * 5;
-  const y = Math.sin(angle) * 5;
+  const velocity = {
+    x: Math.cos(angle) * 5,
+    y: Math.sin(angle) * 5
+  }
   projectiles.push(new Projectile({
-    x: canvas.width / 2,
-    y: canvas.height / 2,
+    x: player.x,
+    y: player.y,
     radius: 5,
-    velocity: {
-      x,
-      y
-    },
-    color: 'red'
+    color: 'red',
+    velocity
   }))
 });
 
@@ -211,3 +241,89 @@ startButtonEl.addEventListener('click', () => {
     }
   })
 });
+
+window.addEventListener('keydown', (event) => {
+  
+  switch (event.key) {
+    case 'ArrowRight':
+      player.velocity.x += 1
+      break
+    case 'ArrowUp':
+      player.velocity.y -= 1
+      break
+    case 'ArrowLeft':
+      player.velocity.x -= 1
+      break
+    case 'ArrowDown':
+      player.velocity.y += 1
+      break
+  }
+})
+
+function generateLines() {
+  const point1 = generatePoint();
+  const point2 = generatePoint();
+  const point3 = generatePoint();
+  const point4 = generatePoint();
+
+  return [
+    point1[0],
+    point1[1],
+    point2[0],
+    point2[1],
+    point3[0],
+    point3[1],
+    point4[0],
+    point4[1],
+  ];
+}
+
+function generatePoint() {
+  return [
+    Math.random() * canvas.width,
+    Math.random() * canvas.height,
+  ];
+}
+
+// setInterval(() => {
+//   lines = generateLines();
+//   point = intersect(
+//     lines[0],
+//     lines[1],
+//     lines[2],
+//     lines[3],
+//     lines[4],
+//     lines[5],
+//     lines[6],
+//     lines[7],
+//   );
+// }, 500);
+
+function intersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+
+  // Check if none of the lines are of length 0
+	if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
+		return false
+	}
+
+	denominator = ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))
+
+  // Lines are parallel
+	if (denominator === 0) {
+		return false
+	}
+
+	let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+	let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
+
+  // is the intersection along the segments
+	if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
+		return false
+	}
+
+  // Return a object with the x and y coordinates of the intersection
+	let x = x1 + ua * (x2 - x1)
+	let y = y1 + ua * (y2 - y1)
+
+	return {x, y}
+}
